@@ -1,5 +1,6 @@
 import os
 import os.path
+import hashlib
 from grugstat.log import Log
 
 def test_init_log():
@@ -111,3 +112,27 @@ def test_consecutive_log():
         if data.count(i) != message_amount:
             assert False
     assert True
+
+def test_log_overwrite():
+
+    '''Test to ensure initiating another log will not overwrite a previously made log'''
+
+    log_path = './tests/log'
+    log = Log(log_path)
+    log.log('foo')
+    log.log('bar')
+
+    with open(log_path, 'rb') as f:
+        data = f.read()
+
+    original_md5 = hashlib.md5(data).hexdigest()
+    log = Log(log_path)
+
+    with open(log_path, 'rb') as f:
+        data = f.read()
+
+    test_md5 = hashlib.md5(data).hexdigest()
+
+    assert original_md5 == test_md5
+
+    os.remove(log_path)
