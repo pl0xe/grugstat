@@ -1,9 +1,8 @@
 import os.path
 from datetime import datetime
+from pathlib import Path
 
 class Log():
-
-    log_path = None
 
     valid_tags = {
         'info': '[-]',
@@ -11,17 +10,36 @@ class Log():
         'success': '[+]',
     }
 
-    def __init__(self, log_path='./log', verbose=False):
+    def __init__(self, path='./log', verbose=False, name='app.log'):
 
-        # path to where file is saved
-        self.log_path = log_path
-
-        # print log messages to console
+        self.path = None
+        self.name = None
+        self.abs_path = None
         self.verbose = verbose
 
+        # handles setting path, name and abs_path properly
+        self.set_path(path, name)
+        self.log_filename = name
+
         # check if log file exists if not create one
-        if not os.path.isfile(self.log_path):
+        if not os.path.exists(self.abs_path):
             self.create_log()
+
+    def set_path(self, path, name):
+
+        '''Ensures paths are valid for the creation of file'''
+        self.path = os.path.abspath(path)
+        self.name = name
+        self.abs_path = os.path.join(self.path, self.name)
+
+    def create_log(self):
+
+        '''Creates the log file'''
+        
+        # Will create directories up to the designated path
+        Path(self.path).mkdir(parents=True, exist_ok=True)
+        self.log('Creating log')
+
 
     def log_tagger(self, log_tag):
 
@@ -30,24 +48,10 @@ class Log():
         # verify tag exists
         if log_tag not in self.valid_tags.keys():
             if self.verbose:
-                print(f'{self.valid_tags['error']} Invalid tag used for logging message.')
+                self.log('Invalid tag used for logging message.', log_tag='error')
             return None
         
         return self.valid_tags[log_tag]
-
-
-    def create_log(self):
-
-        '''Creates the initial file for the log if it does not exist'''
-
-        if self.verbose:
-            print(f'{self.valid_tags['info']} Creating log file.')
-
-        with open(self.log_path, 'w') as f:
-            f.write(f'Log created on {datetime.now()}')
-
-        if self.verbose:
-            print(f'{self.valid_tags['success']} Creating log file.')
 
     def log(self, msg, log_tag='info'):
         
@@ -56,7 +60,7 @@ class Log():
         tag = self.log_tagger(log_tag)
 
         if not tag:
-            print(f'{self.valid_tags['error']} Invalid tags not logging message : {msg}')
+            self.log(f'Invalid tags not logging message : {msg}', log_tag='error')
             return None
 
         time = datetime.now()
@@ -64,7 +68,7 @@ class Log():
         message = f'[{time}] : {tag} {msg}\n'
 
         if self.verbose:
-            print(message)
+            print(message, end='')
 
-        with open(self.log_path, 'w') as f:
+        with open(self.abs_path, 'a') as f:
             f.write(message)
