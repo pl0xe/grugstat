@@ -1,4 +1,3 @@
-import re
 import os
 import os.path
 from grugstat.log import Log
